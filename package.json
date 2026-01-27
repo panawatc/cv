@@ -1,0 +1,13 @@
+{
+  "name": "cv-resume-website",
+  "version": "1.0.0",
+  "description": "Personal CV/Resume Website",
+  "main": "cvresume.js",
+  "scripts": {
+    "start": "node cvresume.js",
+    "dev": "node cvresume.js"
+  },
+  "keywords": ["cv", "resume", "portfolio"],
+  "author": "Panawat",
+  "license": "MIT"
+}

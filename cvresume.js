@@ -1,0 +1,579 @@
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+const PORT = 3000;
+
+// CV Data - แก้ไขข้อมูลตามต้องการ
+const cvData = {
+    name: "ปาณวัฒน์ จันทร์ทองหลาง",
+    nameEn: "Panawat Chanthonglang",
+    nickname: "เจม",
+    title: "นักศึกษาวิทยาการคอมพิวเตอร์",
+    email: "panawat.c@kkumail.com",
+    phone: "063-848-0775",
+    location: "32/1 ม.2 ต.บิง อ.โนนสูง จ.นครราชสีมา",
+    birthday: "27 ตุลาคม 2547",
+    age: "21 ปี",
+    nationality: "ไทย",
+    github: "github.com/panawatc",
+    summary: "มีความละเอียดรอบคอบ มีทักษะการสื่อสารที่ดี มีความสามารถในการจัดการงานหลายอย่างได้อย่างมีประสิทธิภาพในสภาพแวดล้อมที่เปลี่ยนแปลงอย่างรวดเร็ว มุ่งเน้นที่การเพิ่มประสิทธิภาพกระบวนการและสนับสนุนเป้าหมายของทีม มุ่งมั่นที่จะเรียนรู้",
+    skills: [
+        "HTML / CSS / Thymeleaf",
+        "MySQL",
+        "Java",
+        "Python",
+        "C / C#",
+        "Laravel",
+        "Spring Boot"
+    ],
+    experience: [
+        {
+            position: "พนักงานรีดสปอนเซอร์",
+            company: "บริษัท ไฮเทคชัยภูมิแอพพาเรลจำกัด - สาขาบ้านลาด",
+            period: "2025",
+            description: "รีดสปอนเซอร์เสื้อผ้าโดยใช้เครื่องจักรทำงานเป็นทีมให้เสร็จทันเป้าหมายในแต่ละวัน เรียนรู้การรีดสปอนเซอร์แต่ละชนิด แก้ปัญหาเมื่องานเสีย ฝึกความอดทน"
+        }
+    ],
+    education: [
+        {
+            degree: "วิทยาการคอมพิวเตอร์",
+            school: "มหาวิทยาลัยขอนแก่น วิทยาลัยการคอมพิวเตอร์",
+            year: "2023 - ปัจจุบัน",
+            details: "เกรดเฉลี่ย 3.54"
+        },
+        {
+            degree: "มัธยมศึกษา - เอกคณิต-อังกฤษ",
+            school: "โรงเรียนราชสีมาวิทยาลัย",
+            year: "2018 - 2022",
+            details: "เกรดเฉลี่ย 3.91"
+        }
+    ],
+    projects: [
+        {
+            name: "้SigmaCineplex_laravel",
+            description: "โปรเจคเว็บแอปพลิเคชันจองตั๋วหนัง"
+        },
+        {
+            name: "SMTP_NetworkProject",
+            description: "โปรเจคการส่งเมลโดยใช้ SMTP"
+        },
+        {
+            name: "smocp_e-commerce_laravel",
+            description: "โปรเจคเว็บแอปพลิเคชันสโมสรนักศึกษาคณะวิทยาลัยการคอม"
+        },
+        {
+            name: "Pet-platform_javaspringboot",
+            description: "โปรเจคเว็บแอปพลิเคชันขายของจำเป็นสำหรับสัตว์เลี้ยง"
+        }
+    ],
+    languages: [
+        { name: "ภาษาไทย", level: "Native" },
+        { name: "ภาษาอังกฤษ", level: "Good" }
+    ]
+};
+
+// HTML Template
+const generateHTML = (data) => `
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${data.name} - CV/Resume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 50px 40px;
+            text-align: center;
+        }
+
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 5px solid #fff;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 60px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header .title {
+            font-size: 1.3rem;
+            color: #a0a0ff;
+            margin-bottom: 20px;
+        }
+
+        .contact-info {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        .contact-item i {
+            color: #667eea;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 35px;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #667eea;
+        }
+
+        .summary {
+            color: #555;
+            line-height: 1.8;
+            font-size: 1rem;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .skill-item {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            padding: 15px 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .skill-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .skill-item i {
+            color: #667eea;
+        }
+
+        .experience-item, .education-item {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.3s;
+        }
+
+        .experience-item:hover, .education-item:hover {
+            transform: translateX(5px);
+        }
+
+        .experience-header, .education-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .position, .degree {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .company, .school {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .period, .year {
+            background: #667eea;
+            color: #fff;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .description, .details {
+            color: #666;
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        .languages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .language-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .language-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .language-level {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .personal-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .personal-info-item {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .personal-info-item strong {
+            color: #667eea;
+        }
+
+        .project-item {
+            background: #f8f9fa;
+            padding: 20px 25px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #764ba2;
+            transition: transform 0.3s;
+        }
+
+        .project-item:hover {
+            transform: translateX(5px);
+        }
+
+        .project-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+
+        .project-name i {
+            color: #764ba2;
+            margin-right: 8px;
+        }
+
+        .project-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .footer {
+            background: #1a1a2e;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .content {
+                padding: 25px;
+            }
+            
+            .contact-info {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .experience-header, .education-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="profile-image">
+                <img src="pic/studentphoto.jpg" alt="Profile Image" style="width: 140px; height: 140px; border-radius: 50%;">
+            </div>
+            <h1>${data.name}</h1>
+            <p class="title">${data.title}</p>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>${data.email}</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>${data.phone}</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>${data.location}</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fab fa-github"></i>
+                    <span>${data.github}</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content">
+            <section class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-id-card"></i>
+                    ข้อมูลส่วนตัว
+                </h2>
+                <div class="personal-info-grid">
+                    <div class="personal-info-item">
+                        <strong>ชื่อ - สกุล:</strong> ${data.name}
+                    </div>
+                    <div class="personal-info-item">
+                        <strong>ชื่อภาษาอังกฤษ:</strong> ${data.nameEn}
+                    </div>
+                    <div class="personal-info-item">
+                        <strong>ชื่อเล่น:</strong> ${data.nickname}
+                    </div>
+                    <div class="personal-info-item">
+                        <strong>วันเกิด:</strong> ${data.birthday}
+                    </div>
+                    <div class="personal-info-item">
+                        <strong>อายุ:</strong> ${data.age}
+                    </div>
+                    <div class="personal-info-item">
+                        <strong>สัญชาติ:</strong> ${data.nationality}
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-user-circle"></i>
+                    เกี่ยวกับฉัน
+                </h2>
+                <p class="summary">${data.summary}</p>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-code"></i>
+                    ทักษะ
+                </h2>
+                <div class="skills-grid">
+                    ${data.skills.map(skill => `
+                        <div class="skill-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>${skill}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-briefcase"></i>
+                    ประสบการณ์การทำงาน
+                </h2>
+                ${data.experience.map(exp => `
+                    <div class="experience-item">
+                        <div class="experience-header">
+                            <div>
+                                <h3 class="position">${exp.position}</h3>
+                                <p class="company">${exp.company}</p>
+                            </div>
+                            <span class="period">${exp.period}</span>
+                        </div>
+                        <p class="description">${exp.description}</p>
+                    </div>
+                `).join('')}
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-graduation-cap"></i>
+                    การศึกษา
+                </h2>
+                ${data.education.map(edu => `
+                    <div class="education-item">
+                        <div class="education-header">
+                            <div>
+                                <h3 class="degree">${edu.degree}</h3>
+                                <p class="school">${edu.school}</p>
+                            </div>
+                            <span class="year">${edu.year}</span>
+                        </div>
+                        <p class="details">${edu.details}</p>
+                    </div>
+                `).join('')}
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-language"></i>
+                    ภาษา
+                </h2>
+                <div class="languages-grid">
+                    ${data.languages.map(lang => `
+                        <div class="language-item">
+                            <div class="language-name">${lang.name}</div>
+                            <div class="language-level">${lang.level}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-folder-open"></i>
+                    ผลงาน / โปรเจค
+                </h2>
+                ${data.projects.map(project => `
+                    <div class="project-item">
+                        <div class="project-name">
+                            <i class="fas fa-code-branch"></i>
+                            ${project.name}
+                        </div>
+                        <p class="project-description">${project.description}</p>
+                    </div>
+                `).join('')}
+            </section>
+        </div>
+
+        <footer class="footer">
+            <p>© ${new Date().getFullYear()} ${data.name} - สร้างด้วย <i class="fas fa-heart" style="color: #e74c3c;"></i> และ AI Node.js</p>
+        </footer>
+    </div>
+</body>
+</html>
+`;
+
+// Create HTTP Server
+const server = http.createServer((req, res) => {
+    if (req.url === '/' || req.url === '/index.html') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(generateHTML(cvData));
+    } else if (req.url === '/api/cv') {
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify(cvData, null, 2));
+    } else if (req.url.startsWith('/pic/')) {
+        // Serve image files
+        const imagePath = path.join(__dirname, req.url);
+        fs.readFile(imagePath, (err, data) => {
+            if (err) {
+                res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+                res.end('<h1>404 - Image Not Found</h1>');
+            } else {
+                const ext = path.extname(imagePath).toLowerCase();
+                const mimeTypes = {
+                    '.jpg': 'image/jpeg',
+                    '.jpeg': 'image/jpeg',
+                    '.png': 'image/png',
+                    '.gif': 'image/gif',
+                    '.webp': 'image/webp'
+                };
+                const contentType = mimeTypes[ext] || 'application/octet-stream';
+                res.writeHead(200, { 'Content-Type': contentType });
+                res.end(data);
+            }
+        });
+    } else {
+        res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end('<h1>404 - Page Not Found</h1>');
+    }
+});
+
+server.listen(PORT, () => {
+    console.log('╔════════════════════════════════════════════════════════════╗');
+    console.log('║                                                            ║');
+    console.log('║   🌟 CV/Resume Website is running!                         ║');
+    console.log('║                                                            ║');
+    console.log(`║   📍 Local:    http://localhost:\${PORT}                      ║`);
+    console.log('║   📄 API:      http://localhost:' + PORT + '/api/cv                 ║');
+    console.log('║                                                            ║');
+    console.log('║   Press Ctrl+C to stop the server                          ║');
+    console.log('║                                                            ║');
+    console.log('╚════════════════════════════════════════════════════════════╝');
+});
